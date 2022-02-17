@@ -1,0 +1,9 @@
+Dear All,
+
+As announced in this week's class, next week you will provide the first update of your ns3 project.
+
+You will have to plan out the implementation of your project in NS3. You are to outline which classes/functions in NS3 you will modify and what classes/functions you will add to implement your algorithm (In short, a concrete idea about how your algorithm would be implemented in NS3). Submit your pptx/pdf file in Moodle by Sunday 23 January at 8:00 AM.
+
+It is expected you will have a proper understanding of the algorithm you want to implement in NS3 by next week, and also a basic understanding of how it can be implemented. Keep in mind the updates would be graded.
+
+Your supervisor will advise you about what to do from next week onwards.  
