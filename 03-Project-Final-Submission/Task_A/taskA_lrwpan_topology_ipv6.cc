@@ -214,10 +214,10 @@ int main (int argc, char** argv)
     Delaysum += i->second.delaySum.GetSeconds();
   }
 
-  std::string flowFileName ("lr-wpan2");
+  std::string flowFileName ("taskA-lrwpan-ipv6");
   monitor->SerializeToXmlFile ((flowFileName + ".flowmon").c_str(), false, false);
 
-    uint64_t timeDiff = (rxTimeLast - txTimeFirst);
+  uint64_t timeDiff = (rxTimeLast - txTimeFirst);
   double timeDiff2 = (rxTimeSum - txTimeSum) / rxPacketsum;
 
   std::cout << "\n\n";

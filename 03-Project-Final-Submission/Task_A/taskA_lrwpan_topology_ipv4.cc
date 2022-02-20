@@ -56,10 +56,12 @@ int main (int argc, char** argv)
 {
 
   bool verbose = false;
-  int nNodes = 10;
+  int nNodes = 3;
+  int nFlows = 3;
 
   CommandLine cmd (__FILE__);
   cmd.AddValue("nNodes", "the number of nodes", nNodes);
+  cmd.AddValue("nFlows", "the number of flows", nFlows);
   cmd.AddValue ("verbose", "turn on log components", verbose);
   cmd.Parse (argc, argv);
 
@@ -128,31 +130,56 @@ int main (int argc, char** argv)
 
   SixLowPanHelper sixlowpan;
   NetDeviceContainer devices = sixlowpan.Install (lrwpanDevices);
+  for (uint32_t i = 0; i < devices.GetN (); i++)
+  {
+    Ptr<NetDevice> dev = devices.Get (i);
+    dev->SetAttribute ("UseMeshUnder", BooleanValue (true));
+    dev->SetAttribute ("MeshUnderRadius", UintegerValue (10));
+  }
 
   Ipv4AddressHelper address;
   address.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer deviceInterfaces;
   deviceInterfaces = address.Assign (devices);
 
+  uint32_t rxPacketsum = 0;
+  double Delaysum = 0; 
+  double rxTimeSum = 0, txTimeSum = 0;
+  uint32_t txPacketsum = 0;
+  uint32_t txBytessum = 0;
+  uint32_t rxBytessum = 0;
+  uint32_t txTimeFirst = 0;
+  uint32_t rxTimeLast = 0;
+  uint32_t lostPacketssum = 0;
+
   FlowMonitorHelper flowmon;
   Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
-  UdpEchoServerHelper echoServer (9);
+  srand(time(0));
+  int startTime = 1;
+  int endTime = 30;
+  for(int i=0; i<nFlows; i++){
+    int server = rand()%nNodes;
+    int client = rand()%nNodes;
+    int port = 10+i;
+    while(server==client){
+      client = rand()%nNodes;
+    }
 
-  ApplicationContainer serverApps = echoServer.Install (nodes.Get (0));
-  serverApps.Start (Seconds (1.0));
-  serverApps.Stop (Seconds (10.0));
+    UdpEchoServerHelper echoServer (port);
+    ApplicationContainer serverApps = echoServer.Install (nodes.Get (server));
+    serverApps.Start (Seconds (startTime));
 
-  UdpEchoClientHelper echoClient (deviceInterfaces.GetAddress(0), 9);
-  echoClient.SetAttribute ("MaxPackets", UintegerValue (10));
-  echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-  echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+    UdpEchoClientHelper echoClient (deviceInterfaces.GetAddress(server,0), port);
+    echoClient.SetAttribute ("MaxPackets", UintegerValue (100));
+    echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
+    echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-  ApplicationContainer clientApps = echoClient.Install (nodes.Get (nNodes-1));
-  clientApps.Start (Seconds (2.0));
-  clientApps.Stop (Seconds (10.0));
+    ApplicationContainer clientApps = echoClient.Install (nodes.Get (client));
+    clientApps.Start (Seconds (startTime+1));
+  }
 
-  Simulator::Stop (Seconds (12));
+  Simulator::Stop (Seconds (endTime));
 
   Simulator::Run ();
 
@@ -165,10 +192,39 @@ int main (int argc, char** argv)
     if(t.sourcePort==654){
       continue;
     }
+    rxPacketsum += i->second.rxPackets;
+    txPacketsum += i->second.txPackets;
+    txBytessum += i->second.txBytes;
+    rxBytessum += i->second.rxBytes;
+    Delaysum += i->second.delaySum.GetSeconds();
+    lostPacketssum += i->second.lostPackets;
+    
+    if(txTimeFirst == 0)
+    {
+      txTimeFirst = i->second.timeFirstTxPacket.GetSeconds();
+    }
+    
+    rxTimeLast = i->second.timeLastRxPacket.GetSeconds();
+    lostPacketssum += i->second.lostPackets;
+    Delaysum += i->second.delaySum.GetSeconds();
   }
 
-  std::string flowFileName ("lr-wpan");
+  std::string flowFileName ("taskA-lrwpan-ipv4");
   monitor->SerializeToXmlFile ((flowFileName + ".flowmon").c_str(), false, false);
+
+  uint64_t timeDiff = (rxTimeLast - txTimeFirst);
+  double timeDiff2 = (rxTimeSum - txTimeSum) / rxPacketsum;
+
+  std::cout << "\n\n";
+  std::cout << "Total Tx Packets: " << txPacketsum << "\n";
+  std::cout << "Total Rx Packets: " << rxPacketsum << "\n";
+  std::cout << "Total Packets Lost: " << (txPacketsum - rxPacketsum) << "\n";
+  std::cout << "Average Round trip time of Packet: " << timeDiff2 << "\n";
+  std::cout << "Throughput: " << ((rxBytessum * 8.0) / timeDiff)/1024<<" Kbps"<<"\n";
+  std::cout << "Packets Loss Ratio: " << (((txPacketsum - rxPacketsum) * 100) /txPacketsum) << "%" << "\n";
+  std::cout << "Packets Delivery Ratio: " << ((rxPacketsum * 100) /txPacketsum) << "%" << "\n";
+  std::cout << "Avg End to End Delay: " << Delaysum/rxPacketsum << "\n";
+  
   Simulator::Destroy ();
 
 }
