@@ -47,9 +47,13 @@ static void dataSentMacConfirm (McpsDataConfirmParams params)
   // successful if the Ack was received.
   if (params.m_status == LrWpanMcpsDataConfirmStatus::IEEE_802_15_4_SUCCESS)
     {
-      NS_LOG_UNCOND ("**********" << Simulator::Now ().As (Time::S) << " | Transmission successfully sent");
+      ;//NS_LOG_UNCOND ("**********" << Simulator::Now ().As (Time::S) << " | Transmission successfully sent");
     }
 }
+
+// void PrintMyData(std::string s){
+//   std::cout<<s<<std::endl;
+// }
 
 
 int main (int argc, char** argv)
@@ -57,9 +61,11 @@ int main (int argc, char** argv)
 
   bool verbose = false;
   int nNodes = 3;
+  int nFlows = 3;
 
   CommandLine cmd (__FILE__);
   cmd.AddValue("nNodes", "the number of nodes", nNodes);
+  cmd.AddValue("nFlows", "the number of flows", nFlows);
   cmd.AddValue ("verbose", "turn on log components", verbose);
   cmd.Parse (argc, argv);
 
@@ -82,9 +88,9 @@ int main (int argc, char** argv)
   mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
                                  "MinX", DoubleValue (0.0),
                                  "MinY", DoubleValue (0.0),
-                                 "DeltaX", DoubleValue (20),
-                                 "DeltaY", DoubleValue (20),
-                                 "GridWidth", UintegerValue (2),
+                                 "DeltaX", DoubleValue (100),
+                                 "DeltaY", DoubleValue (100),
+                                 "GridWidth", UintegerValue (1),
                                  "LayoutType", StringValue ("RowFirst"));
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (nodes);
@@ -156,22 +162,31 @@ int main (int argc, char** argv)
   FlowMonitorHelper flowmon;
   Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
-  UdpEchoServerHelper echoServer (9);
+  srand(time(0));
+  int startTime = 1;
+  int endTime = 30;
+  for(int i=0; i<nFlows; i++){
+    int server = rand()%nNodes;
+    int client = rand()%nNodes;
+    int port = 10+i;
+    while(server==client){
+      client = rand()%nNodes;
+    }
 
-  ApplicationContainer serverApps = echoServer.Install (nodes.Get (0));
-  serverApps.Start (Seconds (1.0));
-  serverApps.Stop (Seconds (30.0));
+    UdpEchoServerHelper echoServer (port);
+    ApplicationContainer serverApps = echoServer.Install (nodes.Get (server));
+    serverApps.Start (Seconds (startTime));
 
-  UdpEchoClientHelper echoClient (deviceInterfaces.GetAddress(0,0), 9);
-  echoClient.SetAttribute ("MaxPackets", UintegerValue (10));
-  echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-  echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+    UdpEchoClientHelper echoClient (deviceInterfaces.GetAddress(server,0), port);
+    echoClient.SetAttribute ("MaxPackets", UintegerValue (100));
+    echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
+    echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-  ApplicationContainer clientApps = echoClient.Install (nodes.Get (nNodes/2));
-  clientApps.Start (Seconds (2.0));
-  clientApps.Stop (Seconds (30.0));
+    ApplicationContainer clientApps = echoClient.Install (nodes.Get (client));
+    clientApps.Start (Seconds (startTime+1));
+  }
 
-  Simulator::Stop (Seconds (30));
+  Simulator::Stop (Seconds (endTime));
 
   Simulator::Run ();
 

@@ -34,9 +34,11 @@ main (int argc, char *argv[])
 {
   bool verbose = true;
   uint32_t nCsma = 10;
+  int nFlows = 10;
 
   CommandLine cmd (__FILE__);
-  cmd.AddValue ("nCsma", "Number of \"extra\" CSMA nodes/devices", nCsma);
+  cmd.AddValue ("nCsma", "Number of CSMA nodes/devices", nCsma);
+  cmd.AddValue("nFlows", "Number of total flows", nFlows);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
 
   cmd.Parse (argc,argv);
@@ -81,25 +83,36 @@ main (int argc, char *argv[])
   FlowMonitorHelper flowmon;
   Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
-  UdpEchoServerHelper echoServer (9);
+  int startTime = 1;
+  int endTime = 30;
 
-  ApplicationContainer serverApps = echoServer.Install (csmaNodes.Get (nCsma-1));
-  serverApps.Start (Seconds (1.0));
-  serverApps.Stop (Seconds (10.0));
+  srand(time(0));
+  for(int i=0; i<nFlows; i++){
+    int server = rand()%nCsma;
+    int client = rand()%nCsma;
+    int port = 10+i;
+    while(server==client){
+      client = rand()%nCsma;
+    }
 
-  UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma-1), 9);
-  echoClient.SetAttribute ("MaxPackets", UintegerValue (100));
-  echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-  echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+    UdpEchoServerHelper echoServer (port);
+    ApplicationContainer serverApps = echoServer.Install (csmaNodes.Get (server));
+    serverApps.Start (Seconds (startTime));
 
-  ApplicationContainer clientApps = echoClient.Install (csmaNodes.Get (0));
-  clientApps.Start (Seconds (2.0));
-  clientApps.Stop (Seconds (10.0));
+    UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (server), port);
+    echoClient.SetAttribute ("MaxPackets", UintegerValue (100));
+    echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
+    echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+
+    ApplicationContainer clientApps = echoClient.Install (csmaNodes.Get (client));
+    clientApps.Start (Seconds (startTime+1));
+  }
+
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
 
-  Simulator::Stop (Seconds (12));
+  Simulator::Stop (Seconds (endTime));
   Simulator::Run ();
 
 
@@ -130,7 +143,7 @@ main (int argc, char *argv[])
     lostPacketssum += i->second.lostPackets;
     Delaysum += i->second.delaySum.GetSeconds();
   }
-  std::string flowFileName ("second_wired");
+  std::string flowFileName ("taskA_csma_topology");
   monitor->SerializeToXmlFile ((flowFileName + ".flowmon").c_str(), false, false);
 
   uint64_t timeDiff = (rxTimeLast - txTimeFirst);
