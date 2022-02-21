@@ -1254,6 +1254,11 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
       return;
     }
 
+  if (m_congestionCounter > m_congestionMaxCount){
+    NS_LOG_DEBUG ("Ignoring RREQ due to congestion max count reached");
+    return;
+  }
+
   // Increment RREQ hop count
   uint8_t hop = rreqHeader.GetHopCount () + 1;
   rreqHeader.SetHopCount (hop);
@@ -1631,6 +1636,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   if (tag.GetTtl () < 2)
     {
       NS_LOG_DEBUG ("TTL exceeded. Drop RREP destination " << dst << " origin " << rrepHeader.GetOrigin ());
+      m_congestionCounter--;
       return;
     }
 
@@ -1644,6 +1650,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
   socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), AODV_PORT));
+
+  if(rrepHeader.GetCongestionFlag()==1){
+    m_congestionCounter++;
+  }
 }
 
 void
@@ -1753,6 +1763,7 @@ RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
       SendRerrMessage (packet, precursors);
     }
   m_routingTable.InvalidateRoutesWithDst (unreachable);
+  m_congestionCounter--;
 }
 
 void
