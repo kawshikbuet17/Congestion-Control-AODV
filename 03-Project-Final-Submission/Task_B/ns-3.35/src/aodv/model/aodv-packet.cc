@@ -297,7 +297,7 @@ RreqHeader::operator== (RreqHeader const & o) const
 //-----------------------------------------------------------------------------
 
 RrepHeader::RrepHeader (uint8_t prefixSize, uint8_t hopCount, Ipv4Address dst,
-                        uint32_t dstSeqNo, Ipv4Address origin, Time lifeTime)
+                        uint32_t dstSeqNo, Ipv4Address origin, Time lifeTime, int32_t congestionFlag)
   : m_flags (0),
     m_prefixSize (prefixSize),
     m_hopCount (hopCount),
@@ -306,6 +306,7 @@ RrepHeader::RrepHeader (uint8_t prefixSize, uint8_t hopCount, Ipv4Address dst,
     m_origin (origin)
 {
   m_lifeTime = uint32_t (lifeTime.GetMilliSeconds ());
+  m_congestionFlag = congestionFlag;
 }
 
 NS_OBJECT_ENSURE_REGISTERED (RrepHeader);
@@ -330,7 +331,7 @@ RrepHeader::GetInstanceTypeId () const
 uint32_t
 RrepHeader::GetSerializedSize () const
 {
-  return 19;
+  return 19+4;
 }
 
 void
@@ -343,6 +344,7 @@ RrepHeader::Serialize (Buffer::Iterator i) const
   i.WriteHtonU32 (m_dstSeqNo);
   WriteTo (i, m_origin);
   i.WriteHtonU32 (m_lifeTime);
+  i.WriteHtonU32 (m_congestionFlag);
 }
 
 uint32_t
@@ -357,6 +359,7 @@ RrepHeader::Deserialize (Buffer::Iterator start)
   m_dstSeqNo = i.ReadNtohU32 ();
   ReadFrom (i, m_origin);
   m_lifeTime = i.ReadNtohU32 ();
+  m_congestionFlag = i.ReadNtohU32 ();
 
   uint32_t dist = i.GetDistanceFrom (start);
   NS_ASSERT (dist == GetSerializedSize ());
@@ -371,7 +374,7 @@ RrepHeader::Print (std::ostream &os) const
     {
       os << " prefix size " << m_prefixSize;
     }
-  os << " source ipv4 " << m_origin << " lifetime " << m_lifeTime
+  os << " source ipv4 " << m_origin << " lifetime " << m_lifeTime << " congestion flag " << m_congestionFlag
      << " acknowledgment required flag " << (*this).GetAckRequired ();
 }
 
@@ -386,6 +389,17 @@ RrepHeader::GetLifeTime () const
 {
   Time t (MilliSeconds (m_lifeTime));
   return t;
+}
+
+void
+RrepHeader::SetCongestionFlag(int32_t congestionFlag){
+  m_congestionFlag = congestionFlag;
+}
+
+int32_t
+RrepHeader::GetCongestionFlag() const
+{
+  return m_congestionFlag;
 }
 
 void
@@ -424,7 +438,7 @@ RrepHeader::operator== (RrepHeader const & o) const
 {
   return (m_flags == o.m_flags && m_prefixSize == o.m_prefixSize
           && m_hopCount == o.m_hopCount && m_dst == o.m_dst && m_dstSeqNo == o.m_dstSeqNo
-          && m_origin == o.m_origin && m_lifeTime == o.m_lifeTime);
+          && m_origin == o.m_origin && m_lifeTime == o.m_lifeTime && m_congestionFlag == o.m_congestionFlag);
 }
 
 void

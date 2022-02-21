@@ -347,7 +347,7 @@ public:
    */
   RrepHeader (uint8_t prefixSize = 0, uint8_t hopCount = 0, Ipv4Address dst =
                 Ipv4Address (), uint32_t dstSeqNo = 0, Ipv4Address origin =
-                Ipv4Address (), Time lifetime = MilliSeconds (0));
+                Ipv4Address (), Time lifetime = MilliSeconds (0), int32_t congestionFlag = 0);
   /**
    * \brief Get the type ID.
    * \return the object TypeId
@@ -435,6 +435,10 @@ public:
    */
   Time GetLifeTime () const;
 
+  void SetCongestionFlag(int32_t congestionFlag);
+
+  int32_t GetCongestionFlag() const;
+
   // Flags
   /**
    * \brief Set the ack required flag
@@ -480,6 +484,7 @@ private:
   uint32_t      m_dstSeqNo;         ///< Destination Sequence Number
   Ipv4Address     m_origin;           ///< Source IP Address
   uint32_t      m_lifeTime;         ///< Lifetime (in milliseconds)
+  uint32_t          m_congestionFlag;
 };
 
 /**
