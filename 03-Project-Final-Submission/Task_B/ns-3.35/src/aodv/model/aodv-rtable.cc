@@ -43,7 +43,7 @@ namespace aodv {
  */
 
 RoutingTableEntry::RoutingTableEntry (Ptr<NetDevice> dev, Ipv4Address dst, bool vSeqNo, uint32_t seqNo,
-                                      Ipv4InterfaceAddress iface, uint16_t hops, Ipv4Address nextHop, Time lifetime)
+                                      Ipv4InterfaceAddress iface, uint16_t hops, Ipv4Address nextHop, Time lifetime, int32_t congestionFlag)
   : m_ackTimer (Timer::CANCEL_ON_DESTROY),
     m_validSeqNo (vSeqNo),
     m_seqNo (seqNo),

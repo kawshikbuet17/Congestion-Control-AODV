@@ -45,6 +45,8 @@
 #include <algorithm>
 #include <limits>
 
+#define MAX_CONGESTION_COUNT 7
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("AodvRoutingProtocol");
@@ -171,12 +173,14 @@ RoutingProtocol::RoutingProtocol ()
     m_nb (m_helloInterval),
     m_rreqCount (0),
     m_rerrCount (0),
+    m_congestionCounter(0),
     m_htimer (Timer::CANCEL_ON_DESTROY),
     m_rreqRateLimitTimer (Timer::CANCEL_ON_DESTROY),
     m_rerrRateLimitTimer (Timer::CANCEL_ON_DESTROY),
     m_lastBcastTime (Seconds (0))
 {
   m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
+  std::cout<<"Congestion Counter = "<<m_congestionCounter<<" and Max Congestion Count set to "<<MAX_CONGESTION_COUNT<<std::endl;
 }
 
 TypeId
@@ -235,6 +239,10 @@ RoutingProtocol::GetTypeId (void)
                    TimeValue (Seconds (11.2)),
                    MakeTimeAccessor (&RoutingProtocol::m_myRouteTimeout),
                    MakeTimeChecker ())
+    .AddAttribute ("m_congestionCounter", "m_congestionCounter.",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&RoutingProtocol::m_congestionCounter),
+                   MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("BlackListTimeout", "Time for which the node is put into the blacklist = RreqRetries * NetTraversalTime",
                    TimeValue (Seconds (5.6)),
                    MakeTimeAccessor (&RoutingProtocol::m_blackListTimeout),
@@ -1254,7 +1262,8 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
       return;
     }
 
-  if (m_congestionCounter > m_congestionMaxCount){
+  if (m_congestionCounter > MAX_CONGESTION_COUNT){
+    // std::cout<<"Congestion Counter reached Max Count"<<std::endl;
     NS_LOG_DEBUG ("Ignoring RREQ due to congestion max count reached");
     return;
   }
@@ -1429,12 +1438,14 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry con
       m_seqNo++;
     }
   RrepHeader rrepHeader ( /*prefixSize=*/ 0, /*hops=*/ 0, /*dst=*/ rreqHeader.GetDst (),
-                                          /*dstSeqNo=*/ m_seqNo, /*origin=*/ toOrigin.GetDestination (), /*lifeTime=*/ m_myRouteTimeout);
+                                          /*dstSeqNo=*/ m_seqNo, /*origin=*/ toOrigin.GetDestination (), /*lifeTime=*/ m_myRouteTimeout, 1);
+  // std::cout<<"Set Congestion Flag to 1"<<std::endl;
   Ptr<Packet> packet = Create<Packet> ();
   SocketIpTtlTag tag;
   tag.SetTtl (toOrigin.GetHop ());
   packet->AddPacketTag (tag);
   packet->AddHeader (rrepHeader);
+
   TypeHeader tHeader (AODVTYPE_RREP);
   packet->AddHeader (tHeader);
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
@@ -1534,6 +1545,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
       return;
     }
 
+  if(rrepHeader.GetCongestionFlag()==1){
+    m_congestionCounter++;
+    // std::cout<<"Congestion Counter ++"<<std::endl;
+  }
   /*
    * If the route table entry to the destination is created or updated, then the following actions occur:
    * -  the route is marked as active,
@@ -1547,7 +1562,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   Ptr<NetDevice> dev = m_ipv4->GetNetDevice (m_ipv4->GetInterfaceForAddress (receiver));
   RoutingTableEntry newEntry (/*device=*/ dev, /*dst=*/ dst, /*validSeqNo=*/ true, /*seqno=*/ rrepHeader.GetDstSeqno (),
                                           /*iface=*/ m_ipv4->GetAddress (m_ipv4->GetInterfaceForAddress (receiver), 0),/*hop=*/ hop,
-                                          /*nextHop=*/ sender, /*lifeTime=*/ rrepHeader.GetLifeTime ());
+                                          /*nextHop=*/ sender, /*lifeTime=*/ rrepHeader.GetLifeTime (), rrepHeader.GetCongestionFlag());
   RoutingTableEntry toDst;
   if (m_routingTable.LookupRoute (dst, toDst))
     {
@@ -1636,7 +1651,11 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   if (tag.GetTtl () < 2)
     {
       NS_LOG_DEBUG ("TTL exceeded. Drop RREP destination " << dst << " origin " << rrepHeader.GetOrigin ());
-      m_congestionCounter--;
+      if(m_congestionCounter > 0){
+        m_congestionCounter--;
+        // std::cout<<"Congestion Counter -- (TTL exceeded)"<<std::endl;
+      }
+
       return;
     }
 
@@ -1650,10 +1669,6 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
   socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), AODV_PORT));
-
-  if(rrepHeader.GetCongestionFlag()==1){
-    m_congestionCounter++;
-  }
 }
 
 void
@@ -1763,7 +1778,10 @@ RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
       SendRerrMessage (packet, precursors);
     }
   m_routingTable.InvalidateRoutesWithDst (unreachable);
-  m_congestionCounter--;
+  if(m_congestionCounter > 0){
+    m_congestionCounter--;
+    // std::cout<<"Congestion Counter -- (RERR)"<<std::endl;
+  }
 }
 
 void

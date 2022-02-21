@@ -73,7 +73,7 @@ public:
    */
   RoutingTableEntry (Ptr<NetDevice> dev = 0,Ipv4Address dst = Ipv4Address (), bool vSeqNo = false, uint32_t seqNo = 0,
                      Ipv4InterfaceAddress iface = Ipv4InterfaceAddress (), uint16_t  hops = 0,
-                     Ipv4Address nextHop = Ipv4Address (), Time lifetime = Simulator::Now ());
+                     Ipv4Address nextHop = Ipv4Address (), Time lifetime = Simulator::Now (), int32_t congestionFlag = 0);
 
   ~RoutingTableEntry ();
 
@@ -380,6 +380,8 @@ private:
   bool m_blackListState;
   /// Time for which the node is put into the blacklist
   Time m_blackListTimeout;
+
+  int32_t m_congestionFlag;
 };
 
 /**
