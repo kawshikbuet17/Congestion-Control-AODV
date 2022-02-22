@@ -45,7 +45,7 @@
 #include <algorithm>
 #include <limits>
 
-#define MAX_CONGESTION_COUNT 10
+#define MAX_CONGESTION_COUNT 4
 
 namespace ns3 {
 
