@@ -45,7 +45,7 @@
 #include <algorithm>
 #include <limits>
 
-#define MAX_CONGESTION_COUNT 7
+#define MAX_CONGESTION_COUNT 10
 
 namespace ns3 {
 
@@ -180,7 +180,7 @@ RoutingProtocol::RoutingProtocol ()
     m_lastBcastTime (Seconds (0))
 {
   m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
-  std::cout<<"Congestion Counter = "<<m_congestionCounter<<" and Max Congestion Count set to "<<MAX_CONGESTION_COUNT<<std::endl;
+  // std::cout<<"Congestion Counter = "<<m_congestionCounter<<" and Max Congestion Count set to "<<MAX_CONGESTION_COUNT<<std::endl;
 }
 
 TypeId
