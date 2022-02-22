@@ -83,25 +83,25 @@ plot "VaryPacketsPerSecond.txt" using 1:5 with lines title "Packet Loss Ratio (%
 
 
 # Vary TX Range
-set title "TaskA Wireless LowRate (Throughput vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50 \nPacket Size = 4096 byte"
+set title "TaskA Wireless LowRate (Throughput vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50\nNumber of Packets Per Second = 100 \nPacket Size = 4096 byte"
 set xlabel "Number of TX Range"
 set ylabel "Throughput (Kbps)"
 plot "VaryTxRange.txt" using 1:2 with lines title "Throughput"
 
 
-set title "TaskA Wireless LowRate (End-to-End Delay vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50 \nPacket Size = 4096 byte"
+set title "TaskA Wireless LowRate (End-to-End Delay vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50\nNumber of Packets Per Second = 100 \nPacket Size = 4096 byte"
 set xlabel "Number of TX Range"
 set ylabel "End to End Delay (Second)"
 plot "VaryTxRange.txt" using 1:3 with lines title "End to End Delay"
 
 
-set title "TaskA Wireless LowRate (Packet Delivery Ratio vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50 \nPacket Size = 4096 byte"
+set title "TaskA Wireless LowRate (Packet Delivery Ratio vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50\nNumber of Packets Per Second = 100 \nPacket Size = 4096 byte"
 set xlabel "Number of TX Range"
 set ylabel "Packet Delivery Ratio (%)"
 plot "VaryTxRange.txt" using 1:4 with lines title "Packet Delivery Ratio (%)"
 
 
-set title "TaskA Wireless LowRate (Packet Loss Ratio vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50 \nPacket Size = 4096 byte"
+set title "TaskA Wireless LowRate (Packet Loss Ratio vs TX Range) \nNumber of Nodes = 50 \nNumber of Flows = 50\nNumber of Packets Per Second = 100 \nPacket Size = 4096 byte"
 set xlabel "Number of TX Range"
 set ylabel "Packet Loss Ratio (%)"
 plot "VaryTxRange.txt" using 1:5 with lines title "Packet Loss Ratio (%)"

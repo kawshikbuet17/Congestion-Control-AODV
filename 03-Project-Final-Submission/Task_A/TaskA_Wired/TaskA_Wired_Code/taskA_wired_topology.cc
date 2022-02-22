@@ -113,8 +113,8 @@ main (int argc, char *argv[])
   uint32_t txPacketsum = 0;
   uint32_t txBytessum = 0;
   uint32_t rxBytessum = 0;
-  uint32_t txTimeFirst = 0;
-  uint32_t rxTimeLast = 0;
+  double txTimeFirst = 0;
+  double rxTimeLast = 0;
   uint32_t lostPacketssum = 0;
 
   FlowMonitorHelper flowmon;
@@ -196,8 +196,8 @@ main (int argc, char *argv[])
         // <<nPPS<<" "
         <<((rxBytessum * 8.0) / timeDiff)/1024<<" "
         << Delaysum/rxPacketsum <<" "
-        <<(double)((rxPacketsum * 100) /txPacketsum)<<" "
-        <<(double)((lostPacketssum * 100) /txPacketsum)
+        <<(double)((rxPacketsum * 100.0) /txPacketsum)<<" "
+        <<(double)((lostPacketssum * 100.0) /txPacketsum)
         <<std::endl;
   myfile.close();
 
