@@ -174,9 +174,9 @@ main (int argc, char *argv[])
 {
   RoutingExperiment experiment;
   
-  double txp = 50;
-  int nWifis = 12;
-  int nSinks = 12;
+  double txp = 7.5;
+  int nWifis = 65;
+  int nSinks = 30;
 
   CommandLine cmd (__FILE__);
   cmd.AddValue ("nWifis", "nWifis", nWifis);
@@ -193,7 +193,7 @@ RoutingExperiment::Run (int nWifis, int nSinks, double txp)
   std::string rate ("2048bps");
   std::string phyMode ("DsssRate11Mbps");
   std::string tr_name ("AODV_Topology_Trace");
-  int nodeSpeed = 10; //in m/s
+  int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
   m_protocolName = "protocol";
 
@@ -233,8 +233,8 @@ RoutingExperiment::Run (int nWifis, int nSinks, double txp)
 
   ObjectFactory pos;
   pos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
-  pos.Set ("X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
-  pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1500.0]"));
+  pos.Set ("X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=500.0]"));
+  pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=500.0]"));
 
   Ptr<PositionAllocator> taPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
   streamIndex += taPositionAlloc->AssignStreams (streamIndex);
@@ -401,6 +401,7 @@ RoutingExperiment::Run (int nWifis, int nSinks, double txp)
   std::ofstream myfile;
   myfile.open ("DATA_AODV_TOPOLOGY.txt", std::ios::app);
   myfile
+        <<nWifis<<" "
         <<nSinks<<" "
         <<lostPacketssum<<" "
         <<((rxBytessum * 8.0) / timeDiff)/1024<<" "
