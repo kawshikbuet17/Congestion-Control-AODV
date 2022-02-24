@@ -383,12 +383,11 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
 
   uint32_t rxPacketsum = 0;
   double Delaysum = 0; 
-  double rxTimeSum = 0, txTimeSum = 0;
   uint32_t txPacketsum = 0;
   uint32_t txBytessum = 0;
   uint32_t rxBytessum = 0;
-  uint32_t txTimeFirst = 0;
-  uint32_t rxTimeLast = 0;
+  double txTimeFirst = 0;
+  double rxTimeLast = 0;
   uint32_t lostPacketssum = 0;
 
   FlowMonitorHelper flowmon;
@@ -425,28 +424,33 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
     }
     
     rxTimeLast = i->second.timeLastRxPacket.GetSeconds();
-    lostPacketssum += i->second.lostPackets;
-    Delaysum += i->second.delaySum.GetSeconds();
   }
 
   monitor->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
 
-  uint64_t timeDiff = (rxTimeLast - txTimeFirst);
-  double timeDiff2 = (rxTimeSum - txTimeSum) / rxPacketsum;
+  double timeDiff = (rxTimeLast - txTimeFirst);
 
   std::cout << "\n\n";
   std::cout << "Total Tx Packets: " << txPacketsum << "\n";
   std::cout << "Total Rx Packets: " << rxPacketsum << "\n";
-  std::cout << "Total Packets Lost: " << (txPacketsum - rxPacketsum) << "\n";
-  std::cout << "Average Round trip time of Packet: " << timeDiff2 << "\n";
+  std::cout << "Total Packets Lost: " << lostPacketssum << "\n";
   std::cout << "Throughput: " << ((rxBytessum * 8.0) / timeDiff)/1024<<" Kbps"<<"\n";
-  std::cout << "Packets Loss Ratio: " << (((txPacketsum - rxPacketsum) * 100) /txPacketsum) << "%" << "\n";
-  std::cout << "Packets Delivery Ratio: " << ((rxPacketsum * 100) /txPacketsum) << "%" << "\n";
+  std::cout << "Packets Delivery Ratio: " << ((rxPacketsum * 100.0) /txPacketsum) << "%" << "\n";
+  std::cout << "Packets Loss Ratio: " << ((lostPacketssum * 100.0) /txPacketsum) << "%" << "\n";
   std::cout << "Avg End to End Delay: " << Delaysum/rxPacketsum << "\n";
 
   std::ofstream myfile;
   myfile.open ("DATA_NSINKS.txt", std::ios::app);
-  myfile<<nSinks<<" "<<txPacketsum<<" "<<rxPacketsum<<" "<<(txPacketsum - rxPacketsum)<<" "<<((rxBytessum * 8.0) / timeDiff)/1024<<" "<<(((txPacketsum - rxPacketsum) * 100) /txPacketsum)<<" "<<((rxPacketsum * 100) /txPacketsum)<<""<<Delaysum<<std::endl;
+  myfile
+        <<nSinks<<" "
+        <<txPacketsum<<" "
+        <<rxPacketsum<<" "
+        <<lostPacketssum<<" "
+        <<((rxBytessum * 8.0) / timeDiff)/1024<<" "
+        <<((rxPacketsum * 100.0) /txPacketsum)<<" "
+        <<((lostPacketssum * 100.0) /txPacketsum)<<" "
+        <<Delaysum/rxPacketsum
+        <<std::endl;
   myfile.close();
 
   Simulator::Destroy ();
