@@ -94,7 +94,7 @@ In this network topology, I had to simulate a wireless low rate (802.15.4) stati
     \item Coverage area (square coverage are varying one side as Tx\_range, 2 x Tx\_range, 3 x Tx\_range, 4 x Tx\_range, and 5 x Tx\_range)
 \end{enumerate}
 \subsection{Parameters for Task B - MANET AODV}
-According to my selected paper, the number of nodes are varied only to make the simulation.
+According to my selected paper, the number of nodes and sinks are varied to make the simulation.
 \pagebreak
 
 \section{ Overview of the Proposed Algorithm }
@@ -364,8 +364,8 @@ In this paper, they suggested to add a flag in RREP packet header. The flag is o
 \begin{itemize}
     \item The increasing in throughput for larger packets is faster than the increasing for smaller ones. It should increase. But flowmonitor didn't generate good plot this time.
     \item Increasing packets per second should decrease the end to end delay.
-    \item 
-\end{itemize}Increasing number of packets per second don't results in good graphs because there are many more parameters which are dependent with packets per second. So packet delivery ratio, packet drop ratio didn't well simulated here.
+    \item Increasing number of packets per second don't results in good graphs because there are many more parameters which are dependent with packets per second. So packet delivery ratio, packet drop ratio didn't well simulated here.
+\end{itemize}
 \section{Results For Task A - Wireless Low Rate (Static)}
 \subsection{Plot Graph}
 \includepdf[pages=-]{pdfs/TaskA_Wireless_LowRate_Plot.pdf}
@@ -402,6 +402,7 @@ Source codes of this project is available in my Github Repository. \url{https://
 
 \begin{thebibliography}{9}
 \bibitem{texbook}
+CC-ADOV: An effective multiple paths congestion control AODV\\
 Yefa Mai, Fernando Molina Rodriguez, Nan Wang, \url{https://ieeexplore.ieee.org/document/8301758}
 \end{thebibliography}
 \end{document}
